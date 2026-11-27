@@ -1,0 +1,67 @@
+# VPS production stack; the server broker supplies the isolated Compose project name.
+# Only the backend HTTP port is published, bound to loopback for the server proxy.
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB must be set on the server}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER must be set on the server}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set on the server}
+      MIGRATION_DB_USER: ${MIGRATION_DB_USER:?MIGRATION_DB_USER must be set on the server}
+      MIGRATION_DB_PASSWORD: ${MIGRATION_DB_PASSWORD:?MIGRATION_DB_PASSWORD must be set on the server}
+      APP_DB_USER: ${APP_DB_USER:?APP_DB_USER must be set on the server}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?APP_DB_PASSWORD must be set on the server}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./deploy/init-db.sh:/docker-entrypoint-initdb.d/10-init-db.sh:ro
+      - ./deploy/roles.sql:/docker-entrypoint-initdb.d/20-roles.sql.template:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    mem_limit: 512m
+
+  migrate:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://${MIGRATION_DB_USER:?MIGRATION_DB_USER required}:${MIGRATION_DB_PASSWORD:?MIGRATION_DB_PASSWORD required}@db:5432/${POSTGRES_DB:?POSTGRES_DB required}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set on the server}
+      CORS_ORIGINS: ${CORS_ORIGINS:-[]}
+      ENVIRONMENT: production
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+    mem_limit: 256m
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001", "--workers", "2", "--proxy-headers", "--forwarded-allow-ips", "*"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://${APP_DB_USER:?APP_DB_USER required}:${APP_DB_PASSWORD:?APP_DB_PASSWORD required}@db:5432/${POSTGRES_DB:?POSTGRES_DB required}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set on the server}
+      CORS_ORIGINS: ${CORS_ORIGINS:-[]}
+      ENVIRONMENT: production
+    ports:
+      - "127.0.0.1:${APP_PORT:?APP_PORT must be set by sdp port-suggest}:8001"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://127.0.0.1:8001/health', timeout=4)"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    restart: unless-stopped
+    mem_limit: 768m
+
+volumes:
+  pgdata:

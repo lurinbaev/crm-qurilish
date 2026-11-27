@@ -1,0 +1,79 @@
+name: Test, build, deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: Deploy this pushed commit through the project-scoped sdp key
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: crm-qurilish-production
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - uses: astral-sh/setup-uv@v10.4.0
+      - name: Install locked dependencies
+        working-directory: backend
+        run: uv sync --locked --group dev --no-install-project
+      - name: Run backend checks
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql+psycopg://test:test@127.0.0.1:5432/test
+          JWT_SECRET: test-only-secret-that-is-long-enough-1234567890
+        run: |
+          uv run --locked pytest
+          uv run --locked ruff check app scripts tests
+
+  build-image:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: docker/setup-buildx-action@v4.4.1
+      - name: Build the locked backend image
+        uses: docker/build-push-action@v7.2.0
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: false
+          tags: construction-crm:ci
+
+  deploy:
+    needs: [test, build-image]
+    if: github.event_name == 'workflow_dispatch' && inputs.deploy == true && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Deploy via project-scoped broker key
+        env:
+          SDP_SSH_KEY: ${{ secrets.SDP_SSH_KEY }}
+          SDP_KNOWN_HOSTS: ${{ secrets.SDP_KNOWN_HOSTS }}
+          SDP_HOST: ${{ secrets.SDP_HOST }}
+          SDP_USER: ${{ secrets.SDP_USER }}
+          SDP_PORT: ${{ secrets.SDP_PORT }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SDP_SSH_KEY" > ~/.ssh/sdp_deploy
+          chmod 600 ~/.ssh/sdp_deploy
+          printf '%s\n' "$SDP_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh -i ~/.ssh/sdp_deploy \
+            -o BatchMode=yes -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 \
+            -p "${SDP_PORT:-22}" "$SDP_USER@$SDP_HOST" "deploy $SHA"

@@ -1,8 +1,12 @@
 .env
 .venv/
+backend/.venv/
+.uv-cache/
+backend/.uv-cache/
 __pycache__/
 .pytest_cache/
 .ruff_cache/
 .coverage
 private-files/
 *.dump
+deploy/backups/

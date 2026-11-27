@@ -1,12 +1,7 @@
-Edition 3. Lesson 20 checkpoint. Read README.md and lesson 20.
-uv sync --locked
-Copy .env.example to .env; set LOCAL credentials.
-Fresh DB only: uv run python -m crm.setup_database
-uv run alembic upgrade head
-Empty synthetic DB only: uv run python -m crm.seed
-20+: uv run python -m crm.bootstrap
-22+: MinIO, Redis, Celery worker and one beat.
-Same edition 19 -> 23: keep database, upgrade head, do not reseed.
-uv run uvicorn crm.main:app --reload --host 127.0.0.1 --port 8001
-Earlier editions have different revision IDs: preserve them and start edition 3 in a NEW training database. Never stamp over an old database.
-Tests: disposable course_crm_* DB only; never the application database.
+Edition 3, backend checkpoint. Read README.md.
+python scripts/init_env.py creates the root .env without replacing an existing file.
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+Backend package: backend/app; Alembic revisions: backend/alembic/versions.
+CLI bootstrap: docker compose exec api python -m app.modules.users.bootstrap
+Keep existing databases and revisions. Do not reseed a database with user data.
+All five historical revisions remain present, including the legacy no-op revision.
