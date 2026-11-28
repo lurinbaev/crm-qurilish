@@ -10,3 +10,9 @@ __pycache__/
 private-files/
 *.dump
 deploy/backups/
+node_modules/
+frontend/.next/
+frontend/coverage/
+.pnpm-store/
+frontend/.pnpm-store/
+*.tsbuildinfo

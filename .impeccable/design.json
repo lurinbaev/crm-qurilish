@@ -1,0 +1,224 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-28T11:11:48Z",
+  "title": "Design System: Construction CRM",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Turquoise action",
+        "canonical": "#67d8cb",
+        "tonalRamp": [
+          "#062a34",
+          "#0b4d55",
+          "#13736f",
+          "#24978e",
+          "#2bc0b4",
+          "#67d8cb",
+          "#a3e9df",
+          "#e5faf6"
+        ]
+      },
+      "neutral-bg": {
+        "role": "neutral",
+        "displayName": "Deep navy",
+        "canonical": "#071725",
+        "tonalRamp": [
+          "#030b12",
+          "#071725",
+          "#0b2133",
+          "#123149",
+          "#24455c",
+          "#45677a",
+          "#7895a3",
+          "#c7d6dc"
+        ]
+      },
+      "neutral-mid": {
+        "role": "neutral",
+        "displayName": "Navy slate",
+        "canonical": "#0b2133",
+        "tonalRamp": [
+          "#030b12",
+          "#071725",
+          "#0b2133",
+          "#123149",
+          "#24455c",
+          "#45677a",
+          "#7895a3",
+          "#c7d6dc"
+        ]
+      },
+      "neutral-raised": {
+        "role": "neutral",
+        "displayName": "Raised slate",
+        "canonical": "#123149",
+        "tonalRamp": [
+          "#030b12",
+          "#071725",
+          "#0b2133",
+          "#123149",
+          "#24455c",
+          "#45677a",
+          "#7895a3",
+          "#c7d6dc"
+        ]
+      },
+      "text-primary": {
+        "role": "neutral",
+        "displayName": "Pale foreground",
+        "canonical": "#eef6f6",
+        "tonalRamp": [
+          "#15282e",
+          "#344b50",
+          "#536a6e",
+          "#71878a",
+          "#91a5a8",
+          "#b1c1c3",
+          "#d0dcdd",
+          "#eef6f6"
+        ]
+      },
+      "text-secondary": {
+        "role": "neutral",
+        "displayName": "Soft foreground",
+        "canonical": "#b7cbd2",
+        "tonalRamp": [
+          "#1b3037",
+          "#365057",
+          "#526c73",
+          "#6f888f",
+          "#8ba5ac",
+          "#a3bbc2",
+          "#b7cbd2",
+          "#e1edef"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Page title",
+        "purpose": "Workspace and public catalog page headings."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Instructions, content, and read-only details."
+      },
+      "label": {
+        "displayName": "Compact label",
+        "purpose": "Form labels, table headings, and supporting metadata."
+      }
+    },
+    "shadows": [
+      {
+        "name": "glass-depth",
+        "value": "0 18px 48px rgba(0, 8, 18, .28)",
+        "purpose": "Ground glass work panels against the navy page field."
+      },
+      {
+        "name": "dialog-depth",
+        "value": "0 30px 100px rgba(0, 0, 0, .48)",
+        "purpose": "Separate confirmation dialogs from the active workspace."
+      }
+    ],
+    "motion": [
+      {
+        "name": "surface-transition",
+        "value": "cubic-bezier(.16, 1, .3, 1) 180ms",
+        "purpose": "Short hover and navigation changes; respect reduced motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "tablet",
+        "value": "1050px"
+      },
+      {
+        "name": "mobile",
+        "value": "780px"
+      },
+      {
+        "name": "compact-mobile",
+        "value": "540px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Turquoise action for the main next step in a form or workflow.",
+      "html": "<button class=\"ds-btn-primary\">Saqlash</button>",
+      "css": ".ds-btn-primary { min-height: 40px; padding: 0 15px; border: 1px solid rgba(168, 246, 233, .42); border-radius: var(--radius-sm); background: var(--accent); color: var(--accent-ink); font: 700 12px/1.2 var(--font-sans); cursor: pointer; transition: background-color .16s ease, border-color .16s ease, transform .16s ease, backdrop-filter .16s ease; } .ds-btn-primary:hover { background: #83e5d8; transform: translateY(-1px); } .ds-btn-primary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Dark labeled field with a visible focus state for search and form entry.",
+      "html": "<label class=\"ds-field\">Foydalanuvchi nomi<input class=\"ds-input\" placeholder=\"masalan, sotuvchi\"></label>",
+      "css": ".ds-field { display: grid; gap: 7px; color: var(--text-soft); font: 650 11px/1.4 var(--font-sans); } .ds-input { min-height: 41px; padding: 0 12px; border: 1px solid rgba(195,225,232,.22); border-radius: var(--radius-sm); background: rgba(3,18,31,.52); color: var(--text); font: 400 14px/1.5 var(--font-sans); } .ds-input:focus-visible { border-color: var(--accent); outline: 2px solid rgba(103,216,203,.24); }"
+    },
+    {
+      "name": "Glass Panel",
+      "kind": "card",
+      "refersTo": "glass-panel",
+      "description": "Translucent container for an actual work area, with a visible edge and offset depth.",
+      "html": "<section class=\"ds-panel\"><h2>Arizalar</h2><p>Joriy murojaatlarni boshqaring.</p></section>",
+      "css": ".ds-panel { border: 1px solid var(--glass-edge); border-radius: var(--radius-md); background: var(--glass); color: var(--text); box-shadow: var(--shadow-glass); backdrop-filter: blur(18px) saturate(135%); } .ds-panel h2 { margin: 0; font: 700 16px/1.3 var(--font-sans); } .ds-panel p { margin: 6px 0 0; color: var(--text-soft); font: 400 14px/1.5 var(--font-sans); }"
+    },
+    {
+      "name": "Status Chip",
+      "kind": "chip",
+      "refersTo": "status-chip",
+      "description": "Compact text-and-dot state marker; color is never the only signal.",
+      "html": "<span class=\"ds-chip\"><i></i>Ko‘rik</span>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; gap: 7px; padding: 5px 9px; border: 1px solid rgba(195,225,232,.16); border-radius: 999px; background: rgba(242,250,249,.055); color: #b7cbd2; font: 600 10px/1.2 ui-sans-serif, system-ui, sans-serif; } .ds-chip i { width: 7px; height: 7px; border-radius: 50%; background: #f0bd72; }"
+    },
+    {
+      "name": "Workspace Navigation",
+      "kind": "nav",
+      "refersTo": "workspace-navigation",
+      "description": "Deep slate rail with a bright turquoise active item to orient staff across CRM modules.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item ds-active\">Arizalar</a><a class=\"ds-nav-item\">Xonadonlar</a></nav>",
+      "css": ".ds-nav { display: grid; gap: 5px; padding: 12px; background: #071725; color: #b7cbd2; font: 600 12px/1.3 ui-sans-serif, system-ui, sans-serif; } .ds-nav-item { padding: 10px 12px; border-radius: 8px; color: inherit; text-decoration: none; } .ds-nav-item:hover { background: rgba(234,250,250,.07); color: #eef6f6; } .ds-nav-item:focus-visible { outline: 2px solid #67d8cb; outline-offset: 2px; } .ds-nav-item.ds-active { background: rgba(103,216,203,.12); color: #67d8cb; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The glass workbench",
+    "overview": "A dark, calm CRM workbench uses glass panes to organize real sales and inventory work. Tables stay central, with turquoise reserved for action and focus.",
+    "keyCharacteristics": [
+      "Deep navy and slate workspace",
+      "Translucent glass panels with full visible edges",
+      "Uzbek Latin interface and text-labeled states"
+    ],
+    "rules": [
+      {
+        "name": "The Workbench Rule",
+        "body": "Keep lead and catalog data as the visual center; glass contains the work instead of replacing rows with cards.",
+        "section": "layout"
+      },
+      {
+        "name": "The Text-Labeled Status Rule",
+        "body": "Never communicate a lead stage or inventory state with color alone.",
+        "section": "colors"
+      },
+      {
+        "name": "The Surface Rule",
+        "body": "Glass earns its place when it separates a panel from the backdrop or clarifies a modal layer.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Keep controls keyboard reachable and focus visible.",
+      "Pair status colors with short labels.",
+      "Use glass where it creates real depth."
+    ],
+    "donts": [
+      "Do not replace operational tables with repeated icon cards.",
+      "Do not use blur as decoration on every element.",
+      "Do not expose sale completion as a normal stage selector."
+    ]
+  }
+}

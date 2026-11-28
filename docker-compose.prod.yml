@@ -1,17 +1,16 @@
-# VPS production stack; the server broker supplies the isolated Compose project name.
-# Only the backend HTTP port is published, bound to loopback for the server proxy.
+# Server deployment stack. Published web port is loopback only for the VPS proxy.
 services:
   db:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB must be set on the server}
-      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER must be set on the server}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set on the server}
-      MIGRATION_DB_USER: ${MIGRATION_DB_USER:?MIGRATION_DB_USER must be set on the server}
-      MIGRATION_DB_PASSWORD: ${MIGRATION_DB_PASSWORD:?MIGRATION_DB_PASSWORD must be set on the server}
-      APP_DB_USER: ${APP_DB_USER:?APP_DB_USER must be set on the server}
-      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?APP_DB_PASSWORD must be set on the server}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB required}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
+      MIGRATION_DB_USER: ${MIGRATION_DB_USER:?MIGRATION_DB_USER required}
+      MIGRATION_DB_PASSWORD: ${MIGRATION_DB_PASSWORD:?MIGRATION_DB_PASSWORD required}
+      APP_DB_USER: ${APP_DB_USER:?APP_DB_USER required}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?APP_DB_PASSWORD required}
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./deploy/init-db.sh:/docker-entrypoint-initdb.d/10-init-db.sh:ro
@@ -25,12 +24,12 @@ services:
 
   migrate:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     command: ["alembic", "upgrade", "head"]
     environment:
       DATABASE_URL: postgresql+psycopg://${MIGRATION_DB_USER:?MIGRATION_DB_USER required}:${MIGRATION_DB_PASSWORD:?MIGRATION_DB_PASSWORD required}@db:5432/${POSTGRES_DB:?POSTGRES_DB required}
-      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set on the server}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET required}
       CORS_ORIGINS: ${CORS_ORIGINS:-[]}
       ENVIRONMENT: production
     depends_on:
@@ -41,16 +40,15 @@ services:
 
   api:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001", "--workers", "2", "--proxy-headers", "--forwarded-allow-ips", "*"]
     environment:
       DATABASE_URL: postgresql+psycopg://${APP_DB_USER:?APP_DB_USER required}:${APP_DB_PASSWORD:?APP_DB_PASSWORD required}@db:5432/${POSTGRES_DB:?POSTGRES_DB required}
-      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set on the server}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET required}
       CORS_ORIGINS: ${CORS_ORIGINS:-[]}
       ENVIRONMENT: production
-    ports:
-      - "127.0.0.1:${APP_PORT:?APP_PORT must be set by sdp port-suggest}:8001"
+    expose: ["8001"]
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -62,6 +60,31 @@ services:
       start_period: 20s
     restart: unless-stopped
     mem_limit: 768m
+
+  web:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        BACKEND_ORIGIN: http://api:8001
+        NEXT_PUBLIC_COMPANY_SLUG: ${NEXT_PUBLIC_COMPANY_SLUG:?Set real public company slug}
+    environment:
+      BACKEND_ORIGIN: http://api:8001
+      NEXT_PUBLIC_COMPANY_SLUG: ${NEXT_PUBLIC_COMPANY_SLUG:?Set real public company slug}
+      NODE_ENV: production
+    ports:
+      - "127.0.0.1:${APP_PORT:?APP_PORT must be set by sdp port-suggest}:3000"
+    depends_on:
+      api:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    restart: unless-stopped
+    mem_limit: 512m
 
 volumes:
   pgdata:

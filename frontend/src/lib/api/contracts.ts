@@ -1,0 +1,12 @@
+export type Role = "admin" | "seller" | "viewer";
+export type Permission = "leads:read" | "leads:write" | "inventory:write" | "users:manage" | "audit:read";
+export type UserSession = { id: number; username: string; role: Role; company_id: number; permissions: Permission[] };
+export type LeadStage = "new" | "contacted" | "viewing" | "won" | "lost";
+export type Lead = { id: number; stage: LeadStage; full_name: string; phone: string; apartment_id: number; version: number; source?: string };
+export type Complex = { id: number; name: string };
+export type Availability = "available" | "reserved" | "sold";
+export type Apartment = { id: number; complex_id: number; number: string; rooms: number; price_uzs: number; availability: Availability };
+export type StaffUser = { id: number; username: string; role: Role; active: boolean };
+export type AuditRecord = { id: number; company_id: number; actor_id: number; action: string; resource_id: number; created_at: string };
+export type SaleConfirmation = { lead: Lead; apartment: Apartment };
+export type PublicLeadReceipt = { id: number; stage: LeadStage };

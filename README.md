@@ -1,32 +1,35 @@
 # Construction CRM
 
-Python 3.11+, FastAPI, SQLModel, PostgreSQL, Alembic va Docker Compose.
+FastAPI + SQLModel backend, PostgreSQL/Alembic, and modular Next.js App Router frontend. CRM screens and public apartment catalog are in Uzbek (Latin); the UI uses a restrained glass surface treatment with deep navy and turquoise accents.
 
-## Ishga tushirish
+## Local development
 
-1. `python scripts/init_env.py` root `.env` faylini zarur bo‘lsa yaratadi yoki yetishmayotgan sozlamalarni qo‘shadi; mavjud qiymatlarni saqlaydi.
-2. Development rejimi: `docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build`.
-3. API `http://localhost:8001`, Swagger UI `http://localhost:8001/docs` manzillarida. PostgreSQL porti development rejimida faqat localhost’dan ochiladi.
+1. Run `python scripts/init_env.py` to create a local `.env` while preserving existing values.
+2. Run `make dev` (or `docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build`).
+3. Open `http://localhost:3000`; API documentation is at `http://localhost:8001/docs`.
+4. Create the first company administrator with `make bootstrap`.
 
-VPS deploy uchun [docker-compose.prod.yml](docker-compose.prod.yml) alohida production konfiguratsiyasidir. U DB migratsiyasini bir martalik servisda bajarib, API’ni faqat broker tanlagan loopback portida ochadi. Serverdagi Nginx/DNS yo‘naltirishini `server-deploy` broker orqali alohida sozlaydi; domen tasdiqlanmagan bo‘lsa, API ommaga ochilmaydi.
+The dev override exposes database/API/web only on loopback, mounts frontend source with hot reload, and does not route traffic through the production Nginx container.
 
-Yangi o‘rnatishda PostgreSQL alohida migration va runtime rollarini yaratadi: schema o‘zgarishlari migration roli bilan, API so‘rovlari cheklangan runtime roli bilan bajariladi. Mavjud `.env` yangilansa, `init_env.py` eski DB nomi va rolini saqlab, yangi rol qiymatlarini avtomatik qo‘shmaydi; shu tariqa avvalgi `postgres_data` hajmi bilan ulanish uzilmaydi. Database `postgres_data` volume’da saqlanadi. `docker compose down -v` shu ma’lumotlarni ham o‘chiradi.
+## Production
 
-## Buyruqlar
+`docker-compose.prod.yml` runs PostgreSQL, a one-shot migration service, the API, and a standalone Next.js web container. The web app is bound to `127.0.0.1:${APP_PORT}` for the VPS reverse proxy. Set `NEXT_PUBLIC_COMPANY_SLUG` to the real company slug for the public catalog. Deploy via the project-scoped `server-deploy` workflow; no production deploy was run as part of local implementation.
 
-- `make init-env` — root `.env` ni faqat yo‘q bo‘lsa yaratadi.
-- `make dev` — API va PostgreSQL’ni development rejimida build qilib ishga tushiradi.
-- `make test` — backend testlarini ishga tushiradi.
-- `make lint` — Ruff tekshiruvini bajaradi.
-- `make bootstrap` — birinchi kompaniya administratori uchun interaktiv CLI.
-- `make backup` — PostgreSQL custom-format backup yaratadi.
+## Testing and checks
 
-Python buyruqlarini `backend/` ichidan bajaring. Masalan, migration holati: `uv run alembic current`; migration qo‘llash: `uv run alembic upgrade head`.
+- `make test` — backend pytest and frontend Vitest suites.
+- `make lint` — Ruff, ESLint, and TypeScript checks.
+- `cd frontend && pnpm build` — production Next.js build.
+- Existing Alembic revisions are retained. Sale confirmation requires a lead in `viewing`, atomically marks it `won` and its apartment `sold`, and records both changes in audit history.
 
-## GitHub deploy workflow
+## Demo data (separate test database only)
 
-`.github/workflows/deploy.yml` `main` ga push va PR’da testlar hamda Docker image build’ini tekshiradi. Production deploy alohida `workflow_dispatch` orqali, `deploy=true` tanlanganda va project-scoped `sdp` SSH kaliti sozlangandagina ishlaydi. Bir martalik server deploy uchun o‘rnatilgan `server-deploy` skillidan foydalaning.
+`backend/scripts/seed_demo.py` creates idempotent Uzbek synthetic users, complexes, apartments, leads, and an audit row. It does not read `DATABASE_URL`. Supply `SEED_DATABASE_URL` for a dedicated PostgreSQL database whose name includes a clear `test` marker, `ENVIRONMENT=test`, `SEED_CONFIRM_TEST_DB=YES`, and three 12+ character passwords (`SEED_ADMIN_PASSWORD`, `SEED_SELLER_PASSWORD`, `SEED_VIEWER_PASSWORD`), then run `cd backend && uv run --locked python scripts/seed_demo.py`. The script was not run because the separate test database settings have not yet been provided.
 
-GitHub deploy secretlari: `SDP_SSH_KEY`, `SDP_KNOWN_HOSTS`, `SDP_HOST`, `SDP_USER`, `SDP_PORT`. Ular `sdp ci-key` va `sdp host-keys` orqali olinadigan, faqat shu loyiha broker buyruqlarini bajaradigan kirish bo‘lishi kerak.
+Demo usernames: `demo-admin`, `demo-sotuvchi`, and `demo-kuzatuvchi`; passwords are supplied at execution and never committed. Run migrations against that same test DB first if its schema is empty.
 
-Ma’lumotli mavjud DB ustida qayta seed ishlatmang. Barcha 5 ta mavjud Alembic revision saqlangan; `80bd820ae9c1` tarixiy no-op revision bo‘lgani uchun olib tashlanmadi.
+## Environment and commands
+
+`make init-env`, `make dev`, `make up`, `make down`, `make logs`, `make migrate`, `make bootstrap`, `make backup`, and `make release` provide common operations. Do not run `docker compose down -v` if the persistent database volume must be retained.
+
+GitHub Actions tests and builds both images on pushes and pull requests. The optional production deploy is gated behind `workflow_dispatch` and the project-scoped broker SSH secrets.

@@ -19,16 +19,18 @@ migrate:
 	docker compose exec api sh -c 'DATABASE_URL="$$MIGRATION_DATABASE_URL" alembic upgrade head'
 
 seed:
-	docker compose exec api python -m scripts.seed
+	cd backend && uv run --locked python scripts/seed_demo.py
 
 bootstrap:
 	docker compose exec api python -m app.modules.users.bootstrap
 
 test:
 	cd backend && uv run --locked pytest
+	cd frontend && pnpm test
 
 lint:
 	cd backend && uv run --locked ruff check app scripts tests
+	cd frontend && pnpm lint && pnpm typecheck
 
 backup:
 	sh ./deploy/backup.sh

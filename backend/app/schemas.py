@@ -52,3 +52,13 @@ class StageChange(BaseModel):
     model_config = ConfigDict(extra="forbid")
     stage: Literal["new", "contacted", "viewing", "won", "lost"]
     expected_version: int = Field(ge=1)
+
+
+class SaleConfirmRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    expected_version: int = Field(ge=1)
+
+
+class SaleConfirmRead(BaseModel):
+    lead: LeadRead
+    apartment: ApartmentRead

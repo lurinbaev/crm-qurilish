@@ -11,6 +11,7 @@ from app.modules.auth.routes import router as auth_router
 from app.modules.catalog.routes import router as catalog_router
 from app.modules.inventory.routes import router as inventory_router
 from app.modules.leads.routes import router as crm_router
+from app.modules.leads.sales import router as sales_router
 from app.modules.public.routes import router
 
 
@@ -29,10 +30,6 @@ app.include_router(catalog_router)
 @app.get("/health")
 def health():
     return {"status": "ok"}
-@app.get("/")
-def root():
-    return {"service": "Construction CRM", "docs": "/docs"}
-
 @app.get("/ready")
 def ready():
     try:
@@ -53,3 +50,4 @@ install(app)
 app.include_router(auth_router)
 app.include_router(crm_router)
 app.include_router(inventory_router)
+app.include_router(sales_router)
